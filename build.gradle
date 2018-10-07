@@ -1,0 +1,259 @@
+//region Extra properties
+ext {
+    springBootVersion = '1.5.6.RELEASE'
+    springManagementVersion = '1.0.1.RELEASE'
+    ext['hibernate.version'] = "5.2.10.Final"
+}
+//endregion
+
+//region Build script configuration
+buildscript {
+    ext {
+        springBootVersion = '1.5.6.RELEASE'
+        springManagementVersion = '1.0.1.RELEASE'
+        junitGradleVersion = '1.0.1'
+        sonarGradleVersion = '2.6'
+    }
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath "org.junit.platform:junit-platform-gradle-plugin:${junitGradleVersion}"
+        classpath "io.spring.gradle:dependency-management-plugin:${springManagementVersion}"
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${sonarGradleVersion}"
+    }
+}
+//endregion
+
+//region Project identity information
+description = "Trading Test Application Root Project"
+
+//region Common configuration for all projects
+allprojects {
+    apply plugin: 'java'
+    apply plugin: "jacoco"
+
+    // Define extra fields values
+    ext.sourceCompatibility = 1.8
+    ext.targetCompatibility = 1.8
+    ext.platformVersion = '0.1.0'
+    ext.version = '0.1.0'
+    ext.externalDataServiceClientVersion = '1.0'
+    ext.springBootVersion = rootProject.ext.springBootVersion
+    ext.springManagementVersion = rootProject.ext.springManagementVersion
+    ext.springBootMavenBomVersion = "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+    ext.springContextSupportVersion = "4.3.8.RELEASE"
+    ext.apacheCommonsLangVersion = "3.5"
+    ext.hikariConnectionPoolVersion = "2.5.1"
+    ext.easyMockVersion = "3.4"
+    ext.apacheCommonsIoVersion = "2.5"
+    ext.apacheCommonsCollectionVersion = "4.1"
+    ext.orikaVersion = "1.5.1"
+    ext.javaxApiVersion = "2.0.1"
+    ext.jacksonVersion = "2.8.0"
+    ext.hikariCPVersion = "2.7.1"
+    ext.h2DatabaseVersion = "1.4.196"
+    ext.commonsLang3Version = "3.6"
+    ext.aspectjVersion = "1.8.10"
+    ext.slf4jVersion = "1.7.25"
+    ext.jcabiVersion = "0.22.6"
+    ext.javaxAnnotationVersion = "1.3.1"
+    ext.javaxServletHttpVersion = "4.0.0"
+    ext.jerserSwaggerVersion = "1.5.0"
+    ext.swaggerModelsVersion = "1.5.13"
+    ext.jdk8jacksonVersion = "2.9.0"
+    ext.glassfishJerseyVersion = "2.25"
+    ext.jdk8jacksonVersion = "2.9.0"
+    ext.jersyJacksonVersion = "2.25.1"
+    ext.jersyClient = "2.25.1"
+    ext.googleCodeFindBugsVersion = "3.0.2"
+    ext.poiVersion = "3.17"
+    ext.jsr310Version = "2.9.3"
+    ext.dataBindVersion = "2.9.3"
+    ext.logstashEncoderVersion = "5.0"
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    // Set the Java plugin versions
+    sourceCompatibility = ext.sourceCompatibility
+    targetCompatibility = ext.targetCompatibility
+
+    test {
+        reports.junitXml.destination = file("$project.rootDir/build/results")
+        reports.html.destination = file("$project.rootDir/build/reports")
+    }
+
+    jacoco {
+        toolVersion = "0.7.9"
+        reportsDir = file("$project.rootDir/build/reports")
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            csv.enabled = true
+            html.destination file("$project.rootDir/build/reports/jacocoHtml")
+        }
+    }
+}
+//region Project specific configuration
+project(':api:rest') {
+
+    description = "Trade Test API"
+
+    apply plugin: "org.springframework.boot"
+
+    dependencyManagement {
+        imports {
+            mavenBom ext.springBootMavenBomVersion
+        }
+    }
+
+    dependencies {
+        // Spring dependencies
+        compile project(':api:facade')
+
+        compile "org.springframework.boot:spring-boot-starter-web"
+        compile "org.springframework.boot:spring-boot-starter-jetty"
+        compile "org.springframework.boot:spring-boot-starter-jersey"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${project.ext.jsr310Version}"
+        compile "org.glassfish.jersey.media:jersey-media-multipart:${project.ext.glassfishJerseyVersion}"
+        compile "io.swagger:swagger-jersey2-jaxrs:${project.ext.jerserSwaggerVersion}"
+        compile "io.swagger:swagger-models:${project.ext.swaggerModelsVersion}"
+        compile "net.logstash.logback:logstash-logback-encoder:${project.ext.logstashEncoderVersion}"
+    }
+
+    jar {
+        baseName = 'trade'
+        version = project.ext.platformVersion
+    }
+
+    clean.doLast {
+        println file("$projectDir/out").deleteDir()
+    }
+}
+
+project(':api:facade') {
+
+    description = "API Facade"
+
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        imports {
+            mavenBom ext.springBootMavenBomVersion
+        }
+    }
+
+    dependencies {
+        compile project(':service')
+        compile project(':api:model')
+        testCompile "junit:junit"
+        testCompile "org.easymock:easymock:${project.ext.easyMockVersion}"
+
+        compile "com.fasterxml.jackson.core:jackson-annotations"
+        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+        compile "ma.glasnost.orika:orika-core:${project.ext.orikaVersion}"
+        compile "javax.ws.rs:javax.ws.rs-api:${project.ext.javaxApiVersion}"
+        compile "org.aspectj:aspectjrt:${project.ext.aspectjVersion}"
+        compile "javax.annotation:javax.annotation-api:${project.ext.javaxAnnotationVersion}"
+        compile "javax.servlet:javax.servlet-api:${project.ext.javaxServletHttpVersion}"
+        testCompile "org.springframework.boot:spring-boot-starter-test"
+    }
+
+    clean.doLast {
+        println file("$projectDir/out").deleteDir()
+    }
+}
+
+project(':api:model') {
+
+    description = "API Model"
+
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        imports {
+            mavenBom ext.springBootMavenBomVersion
+        }
+    }
+
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-annotations"
+        compile "io.swagger:swagger-jersey2-jaxrs:${project.ext.jerserSwaggerVersion}"
+        compile "net.logstash.logback:logstash-logback-encoder:${project.ext.logstashEncoderVersion}"
+    }
+
+    clean.doLast {
+        println file("$projectDir/out").deleteDir()
+    }
+}
+
+project(':service') {
+
+    description = "Service"
+
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        imports {
+            mavenBom ext.springBootMavenBomVersion
+        }
+    }
+
+    dependencies {
+        compile project(":persistence")
+        testCompile "junit:junit"
+        testCompile "org.easymock:easymock:${project.ext.easyMockVersion}"
+        testCompile "org.assertj:assertj-core"
+        testCompile "org.springframework.boot:spring-boot-starter-test"
+        compile "commons-io:commons-io:${project.ext.apacheCommonsIoVersion}"
+        compile group: 'org.apache.commons', name: 'commons-collections4', version: "${project.ext.apacheCommonsCollectionVersion}"
+        compile "com.jcabi:jcabi-aspects:${project.ext.jcabiVersion}"
+
+    }
+
+    clean.doLast {
+        println file("$projectDir/out").deleteDir()
+    }
+}
+
+
+project(':persistence') {
+
+    description = "Persistence"
+
+    apply plugin: "io.spring.dependency-management"
+
+    dependencyManagement {
+        imports {
+            mavenBom ext.springBootMavenBomVersion
+        }
+    }
+
+    dependencies {
+        compile "org.hibernate:hibernate-entitymanager"
+        compile "org.hibernate:hibernate-java8"
+        compile "com.zaxxer:HikariCP:${project.ext.hikariCPVersion}"
+        compile "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
+        compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+        compile('org.springframework.boot:spring-boot-starter-security') {
+            exclude module: "spring-boot-starter-logging"
+            exclude module: "logback-classic"
+        }
+        compile "org.apache.commons:commons-lang3:${project.ext.apacheCommonsLangVersion}"
+        compile 'org.hsqldb:hsqldb'
+        compile 'com.h2database:h2'
+        compile "org.springframework:spring-context-support:${project.ext.springContextSupportVersion}"
+        compile "com.google.code.findbugs:jsr305:${project.ext.googleCodeFindBugsVersion}"
+        compile "com.fasterxml.jackson.core:jackson-databind"
+//        compile "com.google.guava:guava:${project.ext.guavaVersion}"
+    }
+}

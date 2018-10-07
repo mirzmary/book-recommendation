@@ -1,0 +1,35 @@
+server:
+  port: 8989
+
+persistence:
+   pool:
+      maxsize: 10
+   database:
+      username: sa
+      password:
+      url: jdbc:h2:mem:book
+      driverclassname: org.h2.Driver
+   jpa:
+      persistenceunitname: book-recommendation-jpa-persistence-unit
+   hibernate:
+      outputsqlstatements: true
+      generateddl: true
+      databasedialect: org.hibernate.dialect.H2Dialect
+      formatsql: true
+      hbmddlconversion: create-drop
+      generatestatistics: true
+      globally_quoted_identifiers: false
+      hbm2ddl:
+        auto: create
+      jdbc:
+         fetchsize: 20
+         batchsize: 20
+   utility:
+      commit:
+         runner:
+            threads:
+               max: 25
+
+book:
+  recommendation:
+    count: 20

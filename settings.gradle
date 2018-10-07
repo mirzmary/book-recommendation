@@ -1,0 +1,6 @@
+include 'persistence',
+        'service',
+         'api',
+        ':api:facade',
+        ':api:rest',
+        ':api:model'
